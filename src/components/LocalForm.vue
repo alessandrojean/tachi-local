@@ -138,7 +138,7 @@ function handleSelect (searchEntry) {
         <div class="field-body">
           <div class="field">
             <div class="control">
-              <textarea v-model="entry.description" class="textarea" id="description" placeholder="Ryuk, a god of death, drops his Death Note…"></textarea>
+              <textarea v-model="entry.description" class="textarea" id="description" placeholder="Ex. Ryuk, a god of death, drops his Death Note…"></textarea>
             </div>
           </div>
         </div>
