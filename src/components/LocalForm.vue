@@ -103,20 +103,24 @@ function handleSelect (searchEntry) {
 
       <div class="field is-horizontal">
         <div class="field-label is-normal">
-          <label for="author" class="label">Author</label>
+          <label for="author" class="label">Authors</label>
         </div>
         <div class="field-body">
           <div class="field">
             <div class="control">
               <input v-model="entry.author" type="text" id="author" class="input" placeholder="Ex. Tsugumi Ohba">
             </div>
+            <p class="help">
+              You can use any type of separator character when the series
+              have multiple authors or artists.
+            </p>
           </div>
         </div>
       </div>
 
       <div class="field is-horizontal">
         <div class="field-label is-normal">
-          <label for="artist" class="label">Artist</label>
+          <label for="artist" class="label">Artists</label>
         </div>
         <div class="field-body">
           <div class="field">
@@ -150,7 +154,7 @@ function handleSelect (searchEntry) {
               <input v-model="entry.genre" type="text" id="genre" class="input" placeholder="Ex. Action, Thriller">
             </div>
             <p class="help">
-              Separate the genres using the comma character (<code>,</code>).
+              Use a comma (<code>,</code>) to separate the genres.
             </p>
           </div>
         </div>
