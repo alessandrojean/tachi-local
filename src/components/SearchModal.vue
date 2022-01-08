@@ -156,6 +156,26 @@ function formatText (format) {
   return mapping[format] || 'Unknown format'
 }
 
+function unescapeEntities (string) {
+  const unescapeMapping = {
+    '&amp;': '&',
+    '&lt;': '<',
+    '&gt;': '>',
+    '&quot;': '"',
+    '&#x27;': '\'',
+    '&#x60;': '`'
+  }
+
+  console.log(string)
+
+  const regexSrc = `(?:${Object.keys(unescapeMapping).join('|')})`
+  const replaceRegex = new RegExp(regexSrc, 'g')
+
+  return replaceRegex.test(string)
+    ? string.replace(replaceRegex, m => unescapeMapping[m])
+    : string
+}
+
 function handleSelect () {
   close()
 
@@ -179,11 +199,13 @@ function handleSelect () {
       .map(edge => edge.node.name.full)
       .sort()
       .join(', '),
-    description: selection.value.description
-      .replaceAll('\n', '')
-      .replaceAll('<br>', '\n')
-      .replace(/<\/?[^>]+(>|$)/g, '')
-      .trim(),
+    description: unescapeEntities(
+      selection.value.description
+        .replaceAll('\n', '')
+        .replaceAll('<br>', '\n')
+        .replace(/<\/?[^>]+(>|$)/g, '')
+        .trim()
+    ),
     genre: selection.value.genres.join(', '),
     status: STATUS_MAPPING[selection.value.status] || '0'
   }
