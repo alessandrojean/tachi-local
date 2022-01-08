@@ -1,0 +1,22 @@
+@charset 'utf-8';
+
+@import url('https://rsms.me/inter/inter.css');
+
+$family-sans-serif: 'Inter', sans-serif;
+
+@import '../node_modules/bulma/sass/utilities/_all.sass';
+@import '../node_modules/bulma/sass/base/_all.sass';
+@import '../node_modules/bulma/sass/helpers/_all.sass';
+@import '../node_modules/bulma/sass/elements/_all.sass';
+@import '../node_modules/bulma/sass/form/_all.sass';
+@import '../node_modules/bulma/sass/components/_all.sass';
+@import '../node_modules/bulma/sass/layout/_all.sass';
+
+html, body {
+  min-height: 100vh;
+}
+
+.hero-icon {
+  width: 20px;
+  height: 20px;
+}
