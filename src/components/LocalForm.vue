@@ -2,20 +2,22 @@
 import { computed, reactive, ref } from 'vue'
 import { object, string, array } from 'yup'
 
+import { SearchIcon, UploadIcon } from '@heroicons/vue/solid'
 import SaveFileModal from './SaveFileModal.vue'
+import SearchModal from './SearchModal.vue'
 
 const entry = reactive({
   title: '',
   author: '',
   artist: '',
   description: '',
-  genres: '',
+  genre: '',
   status: '0'
 })
 
 const formattedEntry = computed(() => ({
   ...entry,
-  genres: entry.genres.split(/,\s+/g)
+  genre: entry.genre.split(/,\s+/g)
       .map(genre => genre.trim())
 }))
 
@@ -24,21 +26,18 @@ const formattedEntryStr = computed(() => {
 })
 
 function handleSubmit () {
-  modalOpen.value = true
+  saveModalOpen.value = true
 }
 
-const modalOpen = ref(false)
-
-function handleModalClose () {
-  modalOpen.value = false
-}
+const saveModalOpen = ref(false)
+const searchModalOpen = ref(false)
 
 const detailsSchema = object({
   title: string().required(),
   author: string().required(),
   artist: string().ensure(),
   description: string().ensure(),
-  genres: array(string().required()).ensure(),
+  genre: array(string().required()).ensure(),
   status: string().required().matches(/^[0123]$/)
 })
 
@@ -59,15 +58,19 @@ async function handleFile (event) {
     const json = JSON.parse(text)
     const fileEntry = await detailsSchema.validate(json)
 
-    Object.assign(entry, fileEntry, { genres: fileEntry.genres.join(', ') })
+    Object.assign(entry, fileEntry, { genre: fileEntry.genres.join(', ') })
   } catch (err) {
     error.value = err.message || err
   }
 }
+
+function handleSelect (searchEntry) {
+  Object.assign(entry, searchEntry)
+}
 </script>
 
 <template>
-  <section class="section pt-0">
+  <section class="section py-0">
     <form class="box" @submit.prevent="handleSubmit">
       <article class="message is-danger" v-if="error">
         <div class="message-body p-3">
@@ -80,9 +83,17 @@ async function handleFile (event) {
           <label for="title" class="label">Title</label>
         </div>
         <div class="field-body">
-          <div class="field">
-            <div class="control">
+          <div class="field has-addons">
+            <div class="control is-expanded">
               <input v-model="entry.title" type="text" id="title" class="input is-medium" placeholder="Ex. Death Note">
+            </div>
+            <div class="control">
+              <button class="button is-medium" @click="searchModalOpen = true" type="button">
+                <span class="icon" aria-hidden="true">
+                  <SearchIcon class="hero-icon" />
+                </span>
+                <span>Search</span>
+              </button>
             </div>
           </div>
         </div>
@@ -129,12 +140,12 @@ async function handleFile (event) {
 
       <div class="field is-horizontal">
         <div class="field-label is-normal">
-          <label for="genres" class="label">Genres</label>
+          <label for="genre" class="label">Genres</label>
         </div>
         <div class="field-body">
           <div class="field">
             <div class="control">
-              <input v-model="entry.genres" type="text" id="genres" class="input" placeholder="Ex. Action, Thriller">
+              <input v-model="entry.genre" type="text" id="genre" class="input" placeholder="Ex. Action, Thriller">
             </div>
             <p class="help">
               Separate the genres using the comma character (<code>,</code>).
@@ -170,7 +181,7 @@ async function handleFile (event) {
         <div class="field-body">
           <div class="field is-flex is-justify-content-space-between">
             <div class="control">
-              <button class="button is-primary" type="submit">
+              <button class="button is-link" type="submit">
                 Generate
               </button>
             </div>
@@ -187,9 +198,7 @@ async function handleFile (event) {
                   >
                   <span class="file-cta">
                     <span class="file-icon">
-                      <svg xmlns="http://www.w3.org/2000/svg" class="hero-icon" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clip-rule="evenodd" />
-                      </svg>
+                      <UploadIcon class="hero-icon" />
                     </span>
                     <span class="file-label">
                       Open file…
@@ -204,9 +213,16 @@ async function handleFile (event) {
     </form>
 
     <SaveFileModal
-      :open="modalOpen"
+      :open="saveModalOpen"
       :content="formattedEntryStr"
-      @close="handleModalClose"
+      @close="saveModalOpen = false"
+    />
+
+    <SearchModal
+      :open="searchModalOpen"
+      :search-term="entry.title"
+      @select="handleSelect"
+      @close="searchModalOpen = false"
     />
   </section>
 </template>

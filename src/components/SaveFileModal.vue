@@ -1,5 +1,8 @@
 <script setup>
-import { computed, onMounted, onUnmounted } from 'vue'
+import { computed, ref } from 'vue'
+
+import { Dialog, DialogOverlay, DialogTitle } from '@headlessui/vue'
+import { DownloadIcon } from '@heroicons/vue/solid'
 
 const props = defineProps({ 
   open: Boolean,
@@ -18,29 +21,20 @@ const downloadHref = computed(() => {
   )
 })
 
-function handleKeydown (event) {
-  const e = event || window.event
-
-  if (e.keyCode === 27) {
-    close()
-  }
-}
-
-onMounted(() => {
-  document.addEventListener('keydown', handleKeydown)
-})
-
-onUnmounted(() => {
-  document.removeEventListener('keydown', handleKeydown)
-})
+const downloadLink = ref(null)
 </script>
 
 <template>
-  <div :class="['modal', open ? 'is-active' : '']">
-    <div class="modal-background" @click="close"></div>
+  <Dialog
+    :class="['modal', open ? 'is-active' : '']"
+    :open="open"
+    :initial-focus="downloadLink"
+    @close="close"
+  >
+    <DialogOverlay class="modal-background" />
     <div class="modal-card">
       <header class="modal-card-head">
-        <p class="modal-card-title">File preview</p>
+        <DialogTitle as="p" class="modal-card-title">File preview</DialogTitle>
         <button class="delete" aria-label="Close" @click="close"></button>
       </header>
       <section class="modal-card-body">
@@ -49,24 +43,17 @@ onUnmounted(() => {
       <footer class="modal-card-foot is-justify-content-flex-end">
         <button class="button" @click="close">Cancel</button>
         <a
-          class="button is-primary"
+          class="button is-link"
           download="details.json"
           :href="downloadHref"
+          ref="downloadLink"
         >
           <span class="icon" aria-hidden="true">
-            <svg xmlns="http://www.w3.org/2000/svg" class="hero-icon" viewBox="0 0 20 20" fill="currentColor">
-              <path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6h5a2 2 0 012 2v7a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2h5v5.586l-1.293-1.293zM9 4a1 1 0 012 0v2H9V4z" />
-            </svg>
+            <DownloadIcon class="hero-icon" />
           </span>
-          <span>Save file</span>
+          <span>Download file</span>
         </a>
       </footer>
     </div>
-  </div>
+  </Dialog>
 </template>
-
-<style scoped>
-.modal-background {
-  backdrop-filter: blur(4px);
-}
-</style>

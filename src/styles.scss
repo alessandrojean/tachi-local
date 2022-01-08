@@ -20,3 +20,7 @@ html, body {
   width: 20px;
   height: 20px;
 }
+
+.modal-background {
+  backdrop-filter: blur(4px);
+}
