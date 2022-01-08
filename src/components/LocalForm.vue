@@ -17,8 +17,10 @@ const entry = reactive({
 
 const formattedEntry = computed(() => ({
   ...entry,
-  genre: entry.genre.split(/,\s+/g)
-      .map(genre => genre.trim())
+  genre: entry.genre.length > 0
+    ? entry.genre.split(/,\s+/g)
+        .map(genre => genre.trim())
+    : []
 }))
 
 const formattedEntryStr = computed(() => {
@@ -58,7 +60,7 @@ async function handleFile (event) {
     const json = JSON.parse(text)
     const fileEntry = await detailsSchema.validate(json)
 
-    Object.assign(entry, fileEntry, { genre: fileEntry.genres.join(', ') })
+    Object.assign(entry, fileEntry, { genre: fileEntry.genre.join(', ') })
   } catch (err) {
     error.value = err.message || err
   }
