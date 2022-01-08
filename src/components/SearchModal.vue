@@ -60,7 +60,7 @@ async function search () {
   const graphqlQuery = `
     query ($search: String) {
       Page(page: 1, perPage: 10) {
-        media(search: $search, type: MANGA) {
+        media(search: $search, type: MANGA, format_not: NOVEL) {
           id
           title { romaji }
           status
