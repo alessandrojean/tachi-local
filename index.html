@@ -9,5 +9,17 @@
   <body class="has-background-light">
     <div id="app"></div>
     <script type="module" src="/src/main.js"></script>
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-VS4CXN3HP4"></script>
+    <script>
+      if (window.location.hostname !== 'localhost') {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'G-VS4CXN3HP4');
+      }
+    </script>
   </body>
 </html>
