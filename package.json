@@ -7,15 +7,15 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@headlessui/vue": "^1.4.2",
+    "@headlessui/vue": "^1.4.3",
     "@heroicons/vue": "^1.0.5",
     "bulma": "^0.9.3",
-    "vue": "^3.2.25",
+    "vue": "^3.2.29",
     "yup": "^0.32.11"
   },
   "devDependencies": {
-    "@vitejs/plugin-vue": "^2.0.0",
-    "sass": "^1.47.0",
-    "vite": "^2.7.2"
+    "@vitejs/plugin-vue": "^2.1.0",
+    "sass": "^1.49.7",
+    "vite": "^2.7.13"
   }
 }
