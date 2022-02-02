@@ -40,7 +40,7 @@ const detailsSchema = object({
   artist: string().ensure(),
   description: string().ensure(),
   genre: array(string().required()).ensure(),
-  status: string().required().matches(/^[0123]$/)
+  status: string().required().matches(/^[0123456]$/)
 })
 
 const error = ref(null)
@@ -69,6 +69,11 @@ async function handleFile (event) {
 function handleSelect (searchEntry) {
   Object.assign(entry, searchEntry)
 }
+
+const statusOptions = ref([
+  'Unknown', 'Ongoing', 'Completed', 'Licensed', 
+  'Publishing finished', 'Cancelled', 'On hiatus'
+])
 </script>
 
 <template>
@@ -169,10 +174,13 @@ function handleSelect (searchEntry) {
             <div class="control">
               <div class="select is-fullwidth">
                 <select v-model="entry.status" id="status">
-                  <option value="0">Unknown</option>
-                  <option value="1">Ongoing</option>
-                  <option value="2">Completed</option>
-                  <option value="3">Licensed</option>
+                  <option
+                    v-for="(option, optionIdx) in statusOptions"
+                    :key="optionIdx"
+                    :value="optionIdx"
+                  >
+                    {{ option }}
+                  </option>
                 </select>
               </div>
             </div>

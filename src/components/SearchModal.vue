@@ -183,7 +183,9 @@ function handleSelect () {
   const AUTHORS_ROLES = ['Story', 'Story&Art', 'Story & Art']
 
   const STATUS_MAPPING = {
+    CANCELLED: '5',
     FINISHED: '2',
+    HIATUS: '6',
     RELEASING: '1'
   }
 
