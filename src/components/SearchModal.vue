@@ -1,5 +1,5 @@
-<script setup>
-import { computed, ref, toRefs, watch } from 'vue'
+<script setup lang="ts">
+import { ref, toRefs, watch } from 'vue'
 
 import {
   Dialog,
@@ -11,29 +11,35 @@ import {
 } from '@headlessui/vue'
 import { CheckCircleIcon, CheckIcon, SearchIcon } from '@heroicons/vue/solid'
 
-const props = defineProps({ 
-  open: Boolean,
-  searchTerm: String
-})
+import * as AL from '../types/anilist'
+import { TachiyomiEntry, TachiyomiStatus } from '../types/tachiyomi'
+
+const props = defineProps<{ 
+  open: boolean,
+  searchTerm?: string
+}>()
 
 const { open } = toRefs(props)
 
-const emit = defineEmits(['close', 'select'])
+const emit = defineEmits<{
+  (e: 'close'): void
+  (e: 'select', entry: TachiyomiEntry): void
+}>()
 
 function close () {
   emit('close')
 }
 
-const query = ref(props.searchTerm)
+const query = ref(props.searchTerm || '')
 const error = ref(null)
 const loading = ref(false)
-const results = ref([])
-const selection = ref(null)
+const results = ref<AL.AnilistMedia[]>([])
+const selection = ref<AL.AnilistMedia | null>(null)
 const searchedOnce = ref(false)
 
 watch(open, newValue => {
   if (newValue) {
-    query.value = props.searchTerm
+    query.value = props.searchTerm || ''
     clear()
 
     if (query.value.length > 0) {
@@ -100,7 +106,7 @@ async function search () {
       })
     })
 
-    const result = await response.json()
+    const result = await (response.json() as Promise<AL.AnilistPaginatedMedia>)
 
     results.value = result.data.Page.media || []
 
@@ -109,7 +115,7 @@ async function search () {
     }
 
     searchedOnce.value = true
-  } catch (e) {
+  } catch (e: any) {
     error.value = e.message || e
   } finally {
     loading.value = false
@@ -118,7 +124,7 @@ async function search () {
 
 const ALLOWED_ROLES = ['Art', 'Story', 'Story&Art', 'Story & Art']
 
-function authors (title) {
+function authors (title: AL.AnilistMedia): string {
   const authorsText = title.staff.edges
     .filter(edge => ALLOWED_ROLES.includes(edge.role))
     .map(edge => edge.node.name.full)
@@ -128,36 +134,45 @@ function authors (title) {
   return authorsText.length > 0 ? authorsText : 'Unknown authors'
 }
 
-function tagClass (status) {
-  const mapping = {
+function tagClass (status: AL.AnilistStatus): string {
+  const mapping: Record<AL.AnilistStatus, string> = {
+    CANCELLED: 'is-danger',
     FINISHED: 'is-success',
-    RELEASING: 'is-link',
+    HIATUS: 'is-danger',
+    NOT_YET_RELEASED: 'is-danger',
+    RELEASING: 'is-link'
   }
 
-  return mapping[status] || 'is-danger'
+  return mapping[status]
 }
 
-function statusText (status) {
-  const mapping = {
+function statusText (status: AL.AnilistStatus): string {
+  const mapping: Record<AL.AnilistStatus, string> = {
+    CANCELLED: 'CANCELLED',
     FINISHED: 'COMPLETED',
+    HIATUS: 'HIATUS',
+    NOT_YET_RELEASED: 'UNKNOWN',
     RELEASING: 'ONGOING'
   }
 
-  return mapping[status] || 'UNKNOWN'
+  return mapping[status]
 }
 
-function formatText (format) {
-  const mapping = {
+function formatText (format: AL.AnilistFormat): string {
+  const mapping: Record<AL.AnilistFormat, string> = {
     MANGA: 'Manga',
-    NOVEL: 'Novel',
     ONE_SHOT: 'One-shot'
   }
 
   return mapping[format] || 'Unknown format'
 }
 
-function unescapeEntities (string) {
-  const unescapeMapping = {
+function unescapeEntities (string?: string): string {
+  if (!string) {
+    return ''
+  }
+
+  const unescapeMapping: Record<string, string> = {
     '&amp;': '&',
     '&lt;': '<',
     '&gt;': '>',
@@ -165,8 +180,6 @@ function unescapeEntities (string) {
     '&#x27;': '\'',
     '&#x60;': '`'
   }
-
-  console.log(string)
 
   const regexSrc = `(?:${Object.keys(unescapeMapping).join('|')})`
   const replaceRegex = new RegExp(regexSrc, 'g')
@@ -177,19 +190,24 @@ function unescapeEntities (string) {
 }
 
 function handleSelect () {
+  if (!selection.value) {
+    return
+  }
+
   close()
 
   const ARTISTS_ROLES = ['Art', 'Story&Art', 'Story & Art']
   const AUTHORS_ROLES = ['Story', 'Story&Art', 'Story & Art']
 
-  const STATUS_MAPPING = {
+  const STATUS_MAPPING: Record<AL.AnilistStatus, TachiyomiStatus> = {
     CANCELLED: '5',
     FINISHED: '2',
     HIATUS: '6',
+    NOT_YET_RELEASED: '0',
     RELEASING: '1'
   }
 
-  const entry = {
+  const entry: TachiyomiEntry = {
     title: selection.value.title.romaji,
     author: selection.value.staff.edges
       .filter(edge => AUTHORS_ROLES.includes(edge.role))
@@ -203,10 +221,10 @@ function handleSelect () {
       .join(', '),
     description: unescapeEntities(
       selection.value.description
-        .replaceAll('\n', '')
-        .replaceAll('<br>', '\n')
-        .replace(/<\/?[^>]+(>|$)/g, '')
-        .trim()
+        ?.replaceAll('\n', '')
+        ?.replaceAll('<br>', '\n')
+        ?.replace(/<\/?[^>]+(>|$)/g, '')
+        ?.trim()
     ),
     genre: selection.value.genres.join(', '),
     status: STATUS_MAPPING[selection.value.status] || '0'

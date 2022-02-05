@@ -1,15 +1,15 @@
-<script setup>
+<script setup lang="ts">
 import { computed, ref } from 'vue'
 
 import { Dialog, DialogOverlay, DialogTitle } from '@headlessui/vue'
 import { DownloadIcon } from '@heroicons/vue/solid'
 
-const props = defineProps({ 
-  open: Boolean,
-  content: String
-})
+const props = defineProps<{ 
+  open: boolean,
+  content: string
+}>()
 
-const emit = defineEmits(['close'])
+const emit = defineEmits<{ (e: 'close'): void }>()
 
 function close () {
   emit('close')
@@ -21,7 +21,7 @@ const downloadHref = computed(() => {
   )
 })
 
-const downloadLink = ref(null)
+const downloadLink = ref<HTMLElement>()
 </script>
 
 <template>

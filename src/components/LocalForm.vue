@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { computed, reactive, ref } from 'vue'
 import { object, string, array } from 'yup'
 
@@ -6,7 +6,9 @@ import { SearchIcon, UploadIcon } from '@heroicons/vue/solid'
 import SaveFileModal from './SaveFileModal.vue'
 import SearchModal from './SearchModal.vue'
 
-const entry = reactive({
+import { TachiyomiEntry } from '../types/tachiyomi'
+
+const entry = reactive<TachiyomiEntry>({
   title: '',
   author: '',
   artist: '',
@@ -45,11 +47,12 @@ const detailsSchema = object({
 
 const error = ref(null)
 
-async function handleFile (event) {
+async function handleFile (event: Event) {
   try {
     error.value = null
-    
-    const file = event.target.files.item(0)
+
+    const target = event.target as HTMLInputElement    
+    const file = target.files!.item(0)
 
     if (!file) {
       return
@@ -61,12 +64,12 @@ async function handleFile (event) {
     const fileEntry = await detailsSchema.validate(json)
 
     Object.assign(entry, fileEntry, { genre: fileEntry.genre.join(', ') })
-  } catch (err) {
+  } catch (err: any) {
     error.value = err.message || err
   }
 }
 
-function handleSelect (searchEntry) {
+function handleSelect (searchEntry: TachiyomiEntry) {
   Object.assign(entry, searchEntry)
 }
 
