@@ -2,11 +2,16 @@
 import { computed, reactive, ref } from 'vue'
 import { object, string, array } from 'yup'
 
-import { SearchIcon, UploadIcon } from '@heroicons/vue/solid'
+import {
+  ArrowUpTrayIcon,
+  Cog8ToothIcon,
+  MagnifyingGlassIcon
+} from '@heroicons/vue/20/solid'
 import SaveFileModal from './SaveFileModal.vue'
 import SearchModal from './SearchModal.vue'
+import SettingsModal from './SettingsModal.vue'
 
-import { TachiyomiEntry } from '../types/tachiyomi'
+import type { TachiyomiEntry } from '../types/tachiyomi'
 
 const entry = reactive<TachiyomiEntry>({
   title: '',
@@ -34,7 +39,6 @@ function handleSubmit () {
 }
 
 const saveModalOpen = ref(false)
-const searchModalOpen = ref(false)
 
 const detailsSchema = object({
   title: string().required(),
@@ -63,7 +67,14 @@ async function handleFile (event: Event) {
     const json = JSON.parse(text)
     const fileEntry = await detailsSchema.validate(json)
 
-    Object.assign(entry, fileEntry, { genre: fileEntry.genre.join(', ') })
+    Object.assign(entry, { 
+      title: fileEntry.title,
+      author: fileEntry.author,
+      artist: fileEntry.artist,
+      description: fileEntry.description,
+      genre: fileEntry.genre.join(', '),
+      status: fileEntry.status
+    })
   } catch (err: any) {
     error.value = err.message || err
   }
@@ -77,155 +88,155 @@ const statusOptions = ref([
   'Unknown', 'Ongoing', 'Completed', 'Licensed', 
   'Publishing finished', 'Cancelled', 'On hiatus'
 ])
+
+const searchModalOpen = ref(false)
+const settingsModalOpen = ref(false)
 </script>
 
 <template>
-  <section class="section py-0">
-    <form class="box" @submit.prevent="handleSubmit">
-      <article class="message is-danger" v-if="error">
-        <div class="message-body p-3">
+  <section class="bg-white shadow-md md:rounded-2xl p-6">
+    <form class="flex flex-col gap-2.5" @submit.prevent="handleSubmit">
+      <article class="bg-red-100 text-red-900 rounded-xl" v-if="error">
+        <div class="text-sm p-3">
           {{ error }}
         </div>
       </article>
 
-      <div class="field is-horizontal">
-        <div class="field-label is-medium">
-          <label for="title" class="label">Title</label>
+      <div class="sm:flex gap-4">
+        <div class="sm:text-right sm:w-32 shrink-0 mt-2 mb-1 sm:mb-0">
+          <label for="title" class="font-semibold">Title</label>
         </div>
-        <div class="field-body">
-          <div class="field has-addons">
-            <div class="control is-expanded">
-              <input v-model="entry.title" type="text" id="title" class="input is-medium" placeholder="Ex. Death Note">
-            </div>
-            <div class="control">
-              <button class="button is-medium" @click="searchModalOpen = true" type="button">
-                <span class="icon" aria-hidden="true">
-                  <SearchIcon class="hero-icon" />
-                </span>
-                <span>Search</span>
-              </button>
-            </div>
-          </div>
+        <div class="flex-1 flex w-full">
+          <input
+            v-model="entry.title"
+            type="text"
+            id="title"
+            class="flex-1 min-w-0 !rounded-r-none"
+            placeholder="Ex. Death Note"
+          >
+
+          <button
+            type="button"
+            class="rounded-l-none border-l-0 shrink-0"
+            @click="searchModalOpen = true"
+          >
+            <MagnifyingGlassIcon class="w-5 h-5" />
+            <span class="hidden sm:inline-block">Search</span>
+          </button>
         </div>
       </div>
 
-      <div class="field is-horizontal">
-        <div class="field-label is-normal">
-          <label for="author" class="label">Authors</label>
+      <div class="sm:flex gap-4">
+        <div class="sm:text-right sm:w-32 shrink-0 mt-2 mb-1 sm:mb-0">
+          <label for="author" class="font-semibold">Authors</label>
         </div>
-        <div class="field-body">
-          <div class="field">
-            <div class="control">
-              <input v-model="entry.author" type="text" id="author" class="input" placeholder="Ex. Tsugumi Ohba">
-            </div>
-            <p class="help">
-              You can use any type of separator character when the series
-              have multiple authors or artists.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <div class="field is-horizontal">
-        <div class="field-label is-normal">
-          <label for="artist" class="label">Artists</label>
-        </div>
-        <div class="field-body">
-          <div class="field">
-            <div class="control">
-              <input v-model="entry.artist" type="text" id="artist" class="input" placeholder="Ex. Takeshi Obata">
-            </div>
-          </div>
+        <div class="flex-1">
+          <input
+            v-model="entry.author"
+            type="text"
+            id="author"
+            class="w-full"
+            placeholder="Ex. Tsugumi Ohba"
+          >
+          <p class="text-xs text-gray-600 mt-1.5 mb-1">
+            You can use any type of separator character when the series
+            have multiple authors or artists.
+          </p>
         </div>
       </div>
 
-      <div class="field is-horizontal">
-        <div class="field-label is-normal">
-          <label for="description" class="label">Description</label>
+      <div class="sm:flex gap-4">
+        <div class="sm:text-right sm:w-32 shrink-0 mt-2 mb-1 sm:mb-0">
+          <label for="artist" class="font-semibold">Artists</label>
         </div>
-        <div class="field-body">
-          <div class="field">
-            <div class="control">
-              <textarea v-model="entry.description" class="textarea" id="description" placeholder="Ex. Ryuk, a god of death, drops his Death Note…"></textarea>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="field is-horizontal">
-        <div class="field-label is-normal">
-          <label for="genre" class="label">Genres</label>
-        </div>
-        <div class="field-body">
-          <div class="field">
-            <div class="control">
-              <input v-model="entry.genre" type="text" id="genre" class="input" placeholder="Ex. Action, Thriller">
-            </div>
-            <p class="help">
-              Use a comma (<code>,</code>) to separate the genres.
-            </p>
-          </div>
+        <div class="flex-1">
+          <input
+            v-model="entry.artist"
+            type="text"
+            id="artist"
+            class="w-full"
+            placeholder="Ex. Takeshi Obata"
+          >
         </div>
       </div>
 
-      <div class="field is-horizontal">
-        <div class="field-label is-normal">
-          <label for="status" class="label">Status</label>
+      <div class="sm:flex gap-4">
+        <div class="sm:text-right sm:w-32 shrink-0 mt-2 mb-1 sm:mb-0">
+          <label for="description" class="font-semibold">Description</label>
         </div>
-        <div class="field-body">
-          <div class="field is-narrow">
-            <div class="control">
-              <div class="select is-fullwidth">
-                <select v-model="entry.status" id="status">
-                  <option
-                    v-for="(option, optionIdx) in statusOptions"
-                    :key="optionIdx"
-                    :value="optionIdx"
-                  >
-                    {{ option }}
-                  </option>
-                </select>
-              </div>
-            </div>
-          </div>
+        <div class="flex-1">
+          <textarea
+            v-model="entry.description"
+            class="w-full h-32"
+            id="description"
+            placeholder="Ex. Ryuk, a god of death, drops his Death Note…"
+          />
         </div>
       </div>
 
-      <div class="field is-horizontal pt-5">
-        <div class="field-label">
-          <!-- Left empty for spacing -->
+      <div class="sm:flex gap-4">
+        <div class="sm:text-right sm:w-32 shrink-0 mt-2 mb-1 sm:mb-0">
+          <label for="genre" class="font-semibold">Genres</label>
         </div>
-        <div class="field-body">
-          <div class="field is-flex is-justify-content-space-between">
-            <div class="control">
-              <button class="button is-link" type="submit">
-                Generate
-              </button>
-            </div>
+        <div class="flex-1">
+          <input
+            v-model="entry.genre"
+            type="text"
+            id="genre"
+            class="w-full"
+            placeholder="Ex. Action, Thriller"
+          >
+          <p class="text-xs text-gray-600 mt-1.5 mb-1">
+            Use a comma (<code>,</code>) to separate the genres.
+          </p>
+        </div>
+      </div>
 
-            <div class="control">
-             <div class="file">
-                <label class="file-label">
-                  <input
-                    class="file-input"
-                    type="file"
-                    name="file"
-                    accept="application/json"
-                    @change="handleFile"
-                  >
-                  <span class="file-cta">
-                    <span class="file-icon">
-                      <UploadIcon class="hero-icon" />
-                    </span>
-                    <span class="file-label">
-                      Open file…
-                    </span>
-                  </span>
-                </label>
-              </div>
-            </div>
-          </div>
+      <div class="sm:flex gap-4">
+        <div class="sm:text-right sm:w-32 shrink-0 mt-2 mb-1 sm:mb-0">
+          <label for="status" class="font-semibold">Status</label>
         </div>
+        <div class="flex-1">
+          <select v-model="entry.status" id="status">
+            <option
+              v-for="(option, optionIdx) in statusOptions"
+              :key="optionIdx"
+              :value="optionIdx"
+            >
+              {{ option }}
+            </option>
+          </select>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2 pt-5 sm:pl-36">
+        <button class="button-primary grow justify-center sm:grow-0 sm:justify-start" type="submit">
+          Generate
+        </button>
+
+        <label class="grow sm:grow-0 sm:ml-auto">
+          <input
+            class="sr-only"
+            type="file"
+            name="file"
+            accept="application/json"
+            @change="handleFile"
+          >
+          <span class="button justify-center sm:justify-start">
+            <ArrowUpTrayIcon class="w-5 h-5" />
+            <span>Open file…</span>
+          </span>
+        </label>
+
+        <button
+          class="button-ghost p-2 shrink-0"
+          type="button"
+          aria-label="Settings"
+          title="Settings"
+          @click="settingsModalOpen = true"
+        >
+          <Cog8ToothIcon class="w-5 h-5 !ml-0" />
+        </button>
       </div>
     </form>
 
@@ -233,6 +244,11 @@ const statusOptions = ref([
       :open="saveModalOpen"
       :content="formattedEntryStr"
       @close="saveModalOpen = false"
+    />
+
+    <SettingsModal
+      :open="settingsModalOpen"
+      @close="settingsModalOpen = false"
     />
 
     <SearchModal

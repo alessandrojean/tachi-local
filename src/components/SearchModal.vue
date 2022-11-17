@@ -9,10 +9,16 @@ import {
   RadioGroupLabel,
   RadioGroupOption
 } from '@headlessui/vue'
-import { CheckCircleIcon, CheckIcon, SearchIcon } from '@heroicons/vue/solid'
+import {
+  CheckCircleIcon,
+  CheckIcon,
+  MagnifyingGlassIcon,
+  XCircleIcon
+} from '@heroicons/vue/20/solid'
 
 import * as AL from '../types/anilist'
 import { TachiyomiEntry, TachiyomiStatus } from '../types/tachiyomi'
+import useSettings from '../composables/useSettings'
 
 const props = defineProps<{ 
   open: boolean,
@@ -30,11 +36,13 @@ function close () {
   emit('close')
 }
 
+const { useEnglishTitle } = useSettings()
+
 const query = ref(props.searchTerm || '')
 const error = ref(null)
 const loading = ref(false)
 const results = ref<AL.AnilistMedia[]>([])
-const selection = ref<AL.AnilistMedia | null>(null)
+const selection = ref<AL.AnilistMedia>()
 const searchedOnce = ref(false)
 
 watch(open, newValue => {
@@ -52,7 +60,7 @@ function clear () {
   error.value = null
   loading.value = false
   results.value = []
-  selection.value = null
+  selection.value = undefined
   searchedOnce.value = false
 }
 
@@ -68,7 +76,10 @@ async function search () {
       Page(page: 1, perPage: 10) {
         media(search: $search, type: MANGA, format_not: NOVEL) {
           id
-          title { romaji }
+          title {
+            romaji
+            english
+          }
           status
           description
           genres
@@ -136,11 +147,11 @@ function authors (title: AL.AnilistMedia): string {
 
 function tagClass (status: AL.AnilistStatus): string {
   const mapping: Record<AL.AnilistStatus, string> = {
-    CANCELLED: 'is-danger',
-    FINISHED: 'is-success',
-    HIATUS: 'is-danger',
-    NOT_YET_RELEASED: 'is-danger',
-    RELEASING: 'is-link'
+    CANCELLED: 'bg-red-100 text-red-900',
+    FINISHED: 'bg-emerald-100 text-emerald-800',
+    HIATUS: 'bg-red-100 text-red-900',
+    NOT_YET_RELEASED: 'bg-red-100 text-red-900',
+    RELEASING: 'bg-blue-100 text-blue-800'
   }
 
   return mapping[status]
@@ -208,7 +219,7 @@ function handleSelect () {
   }
 
   const entry: TachiyomiEntry = {
-    title: selection.value.title.romaji,
+    title: properTitle(selection.value.title),
     author: selection.value.staff.edges
       .filter(edge => AUTHORS_ROLES.includes(edge.role))
       .map(edge => edge.node.name.full)
@@ -232,184 +243,171 @@ function handleSelect () {
 
   emit('select', entry)
 }
+
+function properTitle (title: AL.AnilistMedia['title']): string {
+  return useEnglishTitle.value ? (title.english ?? title.romaji) : title.romaji
+}
 </script>
 
 <template>
   <Dialog
-    :class="['modal', open ? 'is-active' : '']"
+    :class="{ hidden: !open }"
     :open="open"
     @close="close"
   >
-    <DialogOverlay class="modal-background" />
-    <div class="modal-card">
-      <header class="modal-card-head">
-        <DialogTitle as="p" class="modal-card-title">Title search</DialogTitle>
-        <button class="delete" aria-label="Close" @click="close"></button>
-      </header>
-      <section class="modal-card-body">
-        <div class="field">
-          <p
-            :class="loading ? 'is-loading' : ''"
-            class="control has-icons-left is-medium"
-          >
+    <div class="fixed z-30 inset-0 flex flex-col items-center justify-center sm:py-6 sm:px-6 md:px-0 md:py-12 lg:py-16">
+      <DialogOverlay
+        class="absolute inset-0 bg-gray-900/80 supports-backdrop-blur:bg-gray-900/60 backdrop-blur"
+      />
+
+      <div class="relative flex flex-col justify-center w-full max-w-2xl max-h-full overflow-hidden bg-white sm:shadow-xl sm:rounded-2xl ring-1 ring-black/5">
+        <header class="shrink-0 py-4 px-6 bg-gray-100 border-b flex justify-between items-center">
+          <DialogTitle as="p" class="text-lg font-medium">
+            Title search
+          </DialogTitle>
+          <button class="button-ghost button-rounded -mr-2" title="Close" aria-label="Close" @click="close">
+            <XCircleIcon class="w-6 h-6 !ml-0" />
+          </button>
+        </header>
+        <section class="flex-1 min-h-0 overflow-y-auto p-6">
+          <div class="relative group w-full">
             <input
-              class="input is-medium is-rounded"
+              class="!rounded-full text-lg w-full pl-12"
               type="search"
               placeholder="Search using Anilist"
               :disabled="loading"
               v-model="query"
               @keydown.prevent.enter="search"
             >
-            <span class="icon is-left">
-              <SearchIcon class="hero-icon" />
-            </span>
+            <div class="flex items-center justify-center absolute left-0 top-0 h-full aspect-square">
+              <MagnifyingGlassIcon class="w-6 h-6 text-gray-400 group-focus-within:text-gray-500" />
+            </div>
+          </div>
+
+          <RadioGroup v-model="selection" class="pt-6" v-if="results.length > 0">
+            <RadioGroupLabel class="sr-only">
+              Select the title
+            </RadioGroupLabel>
+            <div class="space-y-2">
+              <RadioGroupOption
+                v-for="title of results"
+                :key="title.id"
+                :value="title"
+                class="title-option select-none"
+                v-slot="{ checked }"
+              >
+                <div class="title-cover">
+                  <figure class="rounded-md aspect-[2/3] overflow-hidden">
+                    <img
+                      class="w-full h-full object-cover"
+                      :src="title.coverImage.extraLarge"
+                      :alt="`Cover of ${properTitle(title.title)}`"
+                    >
+                  </figure>
+                </div>
+                <div class="title-data">
+                  <p class="title-title">{{ properTitle(title.title) }}</p>
+                  <p class="title-authors has-text-grey-dark">{{ authors(title) }}</p>
+
+                  <div class="title-tags">
+                    <span :class="tagClass(title.status)" class="tag is-light title-status">
+                      {{ statusText(title.status) }}
+                    </span>
+
+                    <span class="title-format has-text-grey">
+                      {{ formatText(title.format) }}
+                    </span>
+                  </div>
+                </div>
+                <div class="title-icon" v-if="checked">
+                  <CheckCircleIcon class="title-check-icon" />
+                </div>
+              </RadioGroupOption>
+            </div>
+          </RadioGroup>
+
+          <p v-if="searchedOnce && results.length === 0 && !loading">
+            No results found for "{{ query }}".
           </p>
-        </div>
-
-        <RadioGroup v-model="selection" class="pt-3" v-if="results.length > 0">
-          <RadioGroupLabel class="is-sr-only">
-            Select the title
-          </RadioGroupLabel>
-          <RadioGroupOption
-            v-for="title of results"
-            :key="title.id"
-            :value="title"
-            class="title-option"
-            v-slot="{ checked }"
-          >
-            <div class="title-cover">
-              <figure class="image is-2by3">
-                <img :src="title.coverImage.extraLarge" :alt="title.title.romaji">
-              </figure>
-            </div>
-            <div class="title-data">
-              <p class="title-title">{{ title.title.romaji }}</p>
-              <p class="title-authors has-text-grey-dark">{{ authors(title) }}</p>
-
-              <div class="title-tags">
-                <span :class="tagClass(title.status)" class="tag is-light title-status">
-                  {{ statusText(title.status) }}
-                </span>
-
-                <span class="title-format has-text-grey">
-                  {{ formatText(title.format) }}
-                </span>
-              </div>
-            </div>
-            <div class="title-icon" v-if="checked">
-              <CheckCircleIcon class="title-check-icon" />
-            </div>
-          </RadioGroupOption>
-        </RadioGroup>
-
-        <p v-if="searchedOnce && results.length === 0 && !loading">
-          No results found for "{{ query }}".
-        </p>
-      </section>
-      <footer class="modal-card-foot is-justify-content-space-between">
-        <p class="is-size-7 is-hidden-touch">
-          Search powered by <a href="https://anilist.co" target="_blank">Anilist.co</a>
-        </p>
-        <div>
-          <button class="button" @click="close">Cancel</button>
-          <button
-            class="button is-link"
-            :disabled="selection === null"
-            @click="handleSelect"
-          >
-            <span class="icon" aria-hidden="true">
-              <CheckIcon class="hero-icon" />
-            </span>
-            <span>Select</span>
-          </button>
-        </div>
-      </footer>
+        </section>
+        <footer class="shrink-0 py-4 px-6 bg-gray-100 border-t flex justify-end sm:justify-between items-center">
+          <p class="text-xs hidden md:block text-gray-600">
+            Search powered by <a class="text-primary-600 underline" href="https://anilist.co" target="_blank">Anilist.co</a>
+          </p>
+          <div class="flex gap-2">
+            <button @click="close">Cancel</button>
+            <button
+              class="button-primary"
+              :disabled="selection === null"
+              @click="handleSelect"
+            >
+              <CheckIcon class="w-5 h-5" />
+              <span>Select</span>
+            </button>
+          </div>
+        </footer>
+      </div>
     </div>
   </Dialog>
 </template>
 
-<style lang="scss" scoped>
+<style lang="postcss" scoped>
 .title-option {
-  padding: 0.5em;
-  border: 1px solid #dadada;
-  border-radius: 5px;
-  display: flex;
+  @apply p-2 border border-gray-300 rounded-md flex gap-4;
 
   &[aria-checked='true'],
   &:focus {
-    border-color: hsl(229, 53%,  53%);
+    @apply border-primary-600;
   }
 
   &:focus {
-    outline: 0;
-    box-shadow: 0 0 0 0.125em rgba(72, 95, 199, 0.25);
-  }
-
-  &:not(:last-child) {
-    margin-bottom: 0.5em;
+    @apply outline-none ring-2 ring-primary-600/20;
   }
 
   .title-cover,
   .title-icon {
-    flex-shrink: 0;
+    @apply shrink-0;
   }
 
   .title-cover {
-    width: 4em;
-    margin-right: 1em;
+    @apply w-16;
   }
 
   .title-data {
-    min-width: 0;
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-    height: 100%;
+    @apply grow min-w-0 flex flex-col h-full;
   }
 
   .title-title,
   .title-authors {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    width: 100%;
+    @apply w-full truncate;
   }
 
   .title-title {
-    font-weight: bold;
+    @apply font-semibold;
   }
 
   .title-authors {
-    font-size: 0.9em;
+    @apply text-sm text-gray-700;
   }
 
   .title-icon {
-    width: 1.5em;
+    @apply w-6 h-6;
 
     .title-check-icon {
-      width: 1.5em;
-      height: 1.5em;
-      fill: hsl(229, 53%,  53%);
+      @apply w-6 h-6 text-primary-600;
     }
   }
 
   .title-tags {
-    margin-top: 1.5em;
-    display: flex;
-    align-content: center;
+    @apply mt-6 flex items-center;
   }
 
   .title-status {
-    letter-spacing: 0.025em;
-    font-size: 0.75rem;
-    line-height: 1rem;
-    font-weight: 600;
+    @apply text-xs font-semibold tracking-wide px-2 py-0.5 rounded;
   }
 
   .title-format {
-    margin-left: 1em;
-    font-size: 0.75rem;
-    line-height: 1.5rem;
+    @apply ml-4 text-xs;
   }
 }
 </style>

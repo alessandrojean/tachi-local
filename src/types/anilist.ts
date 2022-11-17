@@ -26,6 +26,7 @@ export interface AnilistMedia {
   staff: AnilistStaff;
   status: AnilistStatus;
   title: {
+    english?: string;
     romaji: string;
   };
 }
