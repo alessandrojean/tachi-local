@@ -1,6 +1,6 @@
 // @ts-nocheck
 
-if (import.meta.env.VITE_APP_ANALYTICS_ID) {
+if (import.meta.env.VITE_APP_ANALYTICS_ID?.length) {
   const analyticsScript = document.createElement('script')
 
   analyticsScript.addEventListener('load', () => {
