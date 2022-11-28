@@ -45,7 +45,7 @@ const { useEnglishTitle } = useSettings()
               id="use-english-title"
             >
             <label for="use-english-title" class="text-gray-800 select-none">
-              Use English titles on search
+              Prefer English titles on search
             </label>
           </div>
         </section>
