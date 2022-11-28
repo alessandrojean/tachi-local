@@ -95,7 +95,7 @@ const settingsModalOpen = ref(false)
 
 <template>
   <section class="bg-white shadow-md md:rounded-2xl p-6">
-    <form class="flex flex-col gap-2.5" @submit.prevent="handleSubmit">
+    <form class="flex flex-col gap-2.5" @submit.prevent="handleSubmit" autocomplete="off">
       <article class="bg-red-100 text-red-900 rounded-xl" v-if="error">
         <div class="text-sm p-3">
           {{ error }}
@@ -108,7 +108,7 @@ const settingsModalOpen = ref(false)
         </div>
         <div class="flex-1 flex w-full">
           <input
-            v-model="entry.title"
+            v-model.trim="entry.title"
             type="text"
             id="title"
             class="flex-1 min-w-0 !rounded-r-none"
@@ -132,7 +132,7 @@ const settingsModalOpen = ref(false)
         </div>
         <div class="flex-1">
           <input
-            v-model="entry.author"
+            v-model.trim="entry.author"
             type="text"
             id="author"
             class="w-full"
@@ -151,7 +151,7 @@ const settingsModalOpen = ref(false)
         </div>
         <div class="flex-1">
           <input
-            v-model="entry.artist"
+            v-model.trim="entry.artist"
             type="text"
             id="artist"
             class="w-full"
@@ -166,7 +166,7 @@ const settingsModalOpen = ref(false)
         </div>
         <div class="flex-1">
           <textarea
-            v-model="entry.description"
+            v-model.trim="entry.description"
             class="w-full h-32"
             id="description"
             placeholder="Ex. Ryuk, a god of death, drops his Death Note…"
