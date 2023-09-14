@@ -6,7 +6,7 @@ import LocalForm from './components/LocalForm.vue'
   <div class="max-w-3xl mx-auto pt-14">
     <section class="text-center flex flex-col items-center px-4">
       <figure class="w-16 h-16">
-        <img src="https://tachiyomi.org/icons/logo.svg" alt="Tachiyomi Logo">
+        <img src="https://tachiyomi.org/img/logo-128px.png" alt="Tachiyomi Logo">
       </figure>
       <h1 class="text-xl sm:text-3xl font-bold mt-5">
         Tachiyomi Local Source JSON Generator
